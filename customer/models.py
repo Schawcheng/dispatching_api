@@ -1,0 +1,23 @@
+from django.db import models
+
+
+class CustomerModel(models.Model):
+    phone = models.CharField(max_length=32)
+    password = models.CharField(max_length=16)
+
+    usdt_address = models.TextField(max_length=1024)
+    wechat_qrcode = models.TextField(max_length=1024)
+    alipay_qrcode = models.TextField(max_length=1024)
+
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'customer'
+
+    def save(self, *args, **kwargs):
+        import hashlib
+        md5 = hashlib.md5()
+        md5.update(self.password.encode())
+        self.password = md5.hexdigest()
+        super(CustomerModel, self).save(*args, **kwargs)
