@@ -39,7 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'card',
-    'backstage'
+    'backstage',
+    'agent',
+    'bank',
+    'customer',
+    'recharge',
+    'withdraw'
 ]
 
 MIDDLEWARE = [
