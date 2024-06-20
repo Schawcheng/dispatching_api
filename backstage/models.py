@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class BackstageUser(models.Model):
+class BackstageUserModel(models.Model):
     username = models.CharField(max_length=32)
     password = models.CharField(max_length=16)
     last_login = models.DateTimeField(null=True)
@@ -14,4 +14,4 @@ class BackstageUser(models.Model):
         md5 = hashlib.md5()
         md5.update(self.password.encode())
         self.password = md5.hexdigest()
-        super(BackstageUser, self).save(*args, **kwargs)
+        super(BackstageUserModel, self).save(*args, **kwargs)
