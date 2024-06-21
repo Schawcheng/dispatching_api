@@ -26,13 +26,3 @@ class AgentModel(models.Model):
         md5.update(self.password.encode('utf-8'))
         self.password = md5.hexdigest()
         super(AgentModel, self).save(*args, **kwargs)
-
-
-class AgentRebateRateModel(models.Model):
-    lv1 = models.DecimalField(max_digits=5, decimal_places=2)
-    lv2 = models.DecimalField(max_digits=5, decimal_places=2)
-    lv3 = models.DecimalField(max_digits=5, decimal_places=2)
-    is_enable = models.PositiveSmallIntegerField(default=True)
-
-    class Meta:
-        db_table = 'agent_fee_rate'

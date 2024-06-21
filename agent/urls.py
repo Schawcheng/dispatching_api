@@ -21,5 +21,7 @@ from agent import views
 urlpatterns = [
     path('register/', views.RegisterView.as_view()),
     path('login/', views.LoginView.as_view()),
-    path('subordinates/', views.SubordinatesView.as_view())
+    path('subordinates/', views.SubordinatesView.as_view()),
+    path('recharges/', views.RechargesView.as_view()),
+    path('recharges/<str:recharge_no>/', views.RechargeDetailView.as_view())
 ]

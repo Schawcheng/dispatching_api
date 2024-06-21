@@ -1,11 +1,17 @@
+import os.path
+import traceback
+
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from agent.CustomTokenAuthentication import TokenAuthentication
+from agent.CustomTokenAuthentication import JwtTokenAuthentication
 
 from agent.models import AgentModel
 from agent.serializers import AgentSerializer
+
+from recharge.models import RechargeModel
+from recharge.serializers import RechargeSerializer
 
 import tools
 
@@ -59,7 +65,7 @@ class LoginView(APIView):
 
 
 class SubordinatesView(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JwtTokenAuthentication]
 
     def get(self, request):
         me = request.user
@@ -69,6 +75,75 @@ class SubordinatesView(APIView):
         return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
 
 
-class RechargeView(APIView):
+class RechargesView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        recharge_records = RechargeModel.objects.filter()
+        total = recharge_records.count()
+        serializer = RechargeSerializer(recharge_records, many=True)
+
+        return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
+
     def post(self, request):
-        pass
+        try:
+            points = request.data.get('points')
+            me = request.user
+
+            recharge_no = tools.generate_unique_order_number()
+
+            recharge_record = RechargeModel.objects.filter(recharge_no=recharge_no).first()
+
+            if recharge_record is not None:
+                return Response(tools.api_response(500, '系统正忙，请稍后再试'))
+
+            recharge_ = RechargeModel(
+                recharge_no=recharge_no,
+                points=points,
+                agent_id=me.pk
+            )
+            recharge_.save()
+
+            return Response(tools.api_response(200, '充值订单创建成功，请联系客服进行充值打款并上传充值截图'))
+        except Exception as e:
+            traceback.print_exc(e)
+            return Response(tools.api_response(500, '充值失败,请稍后再试'))
+
+
+class RechargeDetailView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, recharge_no):
+        import config.common
+        try:
+            cert = request.data.get('cert', None)
+
+            if not cert:
+                return Response(tools.api_response(401, '未读取到文件'))
+
+            cert_suffix = os.path.splitext(cert.name)[-1]
+
+            if cert_suffix not in ['.jpg', '.jpeg', '.png']:
+                return Response(tools.api_response(401, '仅支持 jpg, jpeg, png 格式的文件'))
+
+            cert_name = tools.generate_unique_string(prefix='cert-')
+
+            cert_fullname = cert_name + cert_suffix
+            cert_path = os.path.join(config.common.RECHARGE_CERT_ROOT_DIR, cert_fullname)
+
+            with open(cert_path, 'wb+') as f:
+                if cert.multiple_chunks():
+                    for chunk in cert.chunks():
+                        f.write(chunk)
+                else:
+                    f.write(cert.read())
+
+            cert_url = os.path.join(config.common.RECHARGE_CERT_ROOT_URL, cert_fullname)
+
+            recharge_record = RechargeModel.objects.get(recharge_no=recharge_no)
+            recharge_record.recharge_cert = cert_url
+            recharge_record.save(update_fields=['recharge_cert'])
+            return Response(tools.api_response(200, '上传成功'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '上传失败'))

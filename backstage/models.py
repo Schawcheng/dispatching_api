@@ -3,7 +3,7 @@ from django.db import models
 
 class BackstageUserModel(models.Model):
     username = models.CharField(max_length=32)
-    password = models.CharField(max_length=16)
+    password = models.CharField(max_length=32)
     last_login = models.DateTimeField(null=True)
 
     class Meta:

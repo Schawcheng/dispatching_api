@@ -6,7 +6,7 @@ import jwt
 from jwt import ExpiredSignatureError
 
 
-class TokenAuthentication(BaseAuthentication):
+class JwtTokenAuthentication(BaseAuthentication):
     def authenticate(self, request, *args, **kwargs):
         auth_token: str = request.META.get('HTTP_AUTHORIZATION')
 

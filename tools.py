@@ -129,5 +129,9 @@ def generate_unique_invitation_code(user_id, length=8):
     return code
 
 
+def save_file(file, path):
+    pass
+
+
 if __name__ == '__main__':
     print(generate_unique_invitation_code(2))
