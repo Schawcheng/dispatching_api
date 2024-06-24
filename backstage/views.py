@@ -1,3 +1,5 @@
+import traceback
+
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,6 +15,9 @@ from system_config.serializers import SystemConfigSerializer
 
 from recharge.models import RechargeModel
 from recharge.serializers import RechargeSerializer
+
+from card.models import CardModel
+from card.serializers import CardSerializer
 
 import tools
 
@@ -56,18 +61,6 @@ class SystemConfigsView(APIView):
             return Response(tools.api_response(200, 'ok', data=serializer.data))
         except Exception:
             return Response(tools.api_response(500, '系统配置获取失败'))
-
-    # def put(self, request):
-    #     try:
-    #         configs = request.data.get('configs')
-    #         for item in configs:
-    #             record = SystemConfigModel.objects.get(pk=item.id)
-    #             record.value = item.value
-    #             record.save()
-    #
-    #         return Response(tools.api_response(200, 'ok'))
-    #     except Exception:
-    #         return Response(tools.api_response(500, '系统配置修改失败'))
 
 
 class SystemConfigDetailView(APIView):
@@ -116,3 +109,48 @@ class RechargeDetailView(APIView):
             return Response(tools.api_response(200, '操作成功'))
         except Exception:
             return Response(tools.api_response(500, '操作失败'))
+
+
+class CardsView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            records = CardModel.objects.all()
+            total = records.count()
+
+            serializer = CardSerializer(records, many=True)
+
+            return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
+        except Exception:
+            return Response(tools.api_response(500, '获取卡密失败'))
+
+    def post(self, request):
+        try:
+            agent_id = request.data.get('agent_id')
+            points = request.data.get('points')
+            quantity = request.data.get('quantity')
+
+            record_agent = AgentModel.objects.get(pk=agent_id)
+
+            if points * quantity > record_agent.points:
+                return Response(tools.api_response(401, '积分不足以对应数量的卡密扣取'))
+
+            record_agent.points -= points
+
+            record_agent.save(update_fields=['points'])
+
+            for i in range(quantity):
+                key = tools.generate_unique_string()
+                card_obj = CardModel(
+                    key=key,
+                    points=points,
+                    agent_id=agent_id,
+                )
+                card_obj.save()
+
+            return Response(tools.api_response(200, '发卡成功'))
+
+        except Exception as e:
+            traceback.print_exc(e)
+            return Response(tools.api_response(500, '发卡失败'))

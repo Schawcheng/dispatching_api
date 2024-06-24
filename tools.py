@@ -16,7 +16,7 @@ def api_response(code, msg, data={}, total=0):
     }
 
 
-def generate_unique_string(length=32, prefix="", suffix=""):
+def generate_unique_string(length=32):
     """
     Generate a unique string using UUID and timestamp.
 
@@ -30,10 +30,11 @@ def generate_unique_string(length=32, prefix="", suffix=""):
     """
 
     random_id = str(uuid.uuid4())[:length]
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    unique_string = f"{prefix}{random_id}{timestamp}{suffix}"
+    # timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    # unique_string = f"{prefix}{random_id}{timestamp}{suffix}"
+    # unique_string = f"{random_id}"
 
-    return unique_string
+    return random_id.replace('-', '').upper()
 
 
 def generate_jwt(user_id, username, secret_key, algorithm="HS256"):
@@ -41,7 +42,7 @@ def generate_jwt(user_id, username, secret_key, algorithm="HS256"):
         'user_id': user_id,
         'username': username,
         'iat': datetime.datetime.utcnow().timestamp(),
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=3)
     }
     return jwt.encode(payload, secret_key, algorithm=algorithm)
 
@@ -134,4 +135,4 @@ def save_file(file, path):
 
 
 if __name__ == '__main__':
-    print(generate_unique_invitation_code(2))
+    print(len(generate_unique_string()))
