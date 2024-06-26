@@ -5,6 +5,7 @@ from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+import config.common
 from agent.CustomTokenAuthentication import JwtTokenAuthentication
 
 from agent.models import AgentModel
@@ -13,7 +14,12 @@ from agent.serializers import AgentSerializer
 from recharge.models import RechargeModel
 from recharge.serializers import RechargeSerializer
 
+from card.models import CardModel
+from card.serializers import CardSerializer
+
 import tools
+
+import utils.upload_file
 
 
 class RegisterView(APIView):
@@ -79,7 +85,8 @@ class RechargesView(APIView):
     authentication_classes = [JwtTokenAuthentication]
 
     def get(self, request):
-        recharge_records = RechargeModel.objects.filter()
+        me = request.user
+        recharge_records = RechargeModel.objects.filter(agent_id=me.pk)
         total = recharge_records.count()
         serializer = RechargeSerializer(recharge_records, many=True)
 
@@ -147,3 +154,128 @@ class RechargeDetailView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '上传失败'))
+
+
+class CardsView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            records = CardModel.objects.filter(agent_id=me.pk)
+            total = records.count()
+            serializer = CardSerializer(records, many=True)
+            return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
+        except Exception:
+            return Response(tools.api_response(500, '获取卡密列表失败'))
+
+
+class PaymentTypesView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            record_agent = AgentModel.objects.get(pk=me.pk)
+
+            ret = {
+                'usdt': record_agent.usdt_address,
+                'alipay': record_agent.alipay_qrcode,
+                'wechat': record_agent.wechat_qrcode
+            }
+            return Response(tools.api_response(200, 'ok', data=ret))
+        except Exception:
+            return Response(tools.api_response(500, '获取收款方式失败'))
+
+
+class PaymentTypeDetailView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request):
+        try:
+            me = request.user
+            payment_type = request.data.get('payment_type')
+            content = request.data.get('content', None)
+
+            if content is None:
+                return Response(tools.api_response(401, '请选择有效的内容上传'))
+
+            record_agent = AgentModel.objects.get(pk=me.pk)
+
+            if payment_type == 'usdt':
+                record_agent.usdt_address = content
+                record_agent.save(update_fields=['usdt_address'])
+                return Response(tools.api_response(200, 'usdt地址修改成功'))
+
+            qrcode_suffix = os.path.splitext(content.name)[-1]
+
+            if qrcode_suffix not in ['.jpg', '.jpeg', '.png']:
+                return Response(tools.api_response(401, '仅支持 jpg, jpeg, png 格式的文件'))
+
+            if payment_type == 'alipay':
+                qrcode_path, qrcode_filename = utils.upload_file.handle_upload_file_save_path(
+                    config.common.QRCODE_ROOT_DIR,
+                    qrcode_suffix, prefix='alipay-')
+
+                utils.upload_file.save_django_upload_file(content, qrcode_path)
+                qrcode_url = utils.upload_file.generate_file_url(config.common.QRCODE_ROOT_URL, qrcode_filename)
+
+                record_agent.alipay_qrcode = qrcode_url
+                record_agent.save(update_fields=['alipay_qrcode'])
+                return Response(tools.api_response(200, '上传支付宝收款码成功'))
+
+            if payment_type == 'wechat':
+                qrcode_path, qrcode_filename = utils.upload_file.handle_upload_file_save_path(
+                    config.common.QRCODE_ROOT_DIR, qrcode_suffix, prefix='wechat-')
+
+                utils.upload_file.save_django_upload_file(content, qrcode_path)
+                qrcode_url = utils.upload_file.generate_file_url(config.common.QRCODE_ROOT_URL, qrcode_filename)
+
+                record_agent.wechat_qrcode = qrcode_url
+                record_agent.save(update_fields=['wechat_qrcode'])
+                return Response(tools.api_response(200, '上传微信收款码成功'))
+
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '上传失败'))
+
+
+class MyPointsView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            record_agent = AgentModel.objects.get(pk=me.pk)
+            points = record_agent.points
+
+            return Response(tools.api_response(200, 'ok', data={'points': points}))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取我的积分失败'))
+
+
+class SubordinatesStatisticsView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            records_agent = AgentModel.objects.filter(parent_id=me.pk)
+            total = records_agent.count()
+            return Response(tools.api_response(200, 'ok', total=total))
+        except Exception:
+            return Response(tools.api_response(500, '获取团队人数失败'))
+
+
+class MyCardsStatistic(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            record_cards = CardModel.objects.filter(agent_id=me.pk)
+            total = record_cards.count()
+            return Response(tools.api_response(200, 'ok', total=total))
+        except Exception:
+            return Response(tools.api_response(500, '获取卡密总数失败'))

@@ -1,4 +1,5 @@
 import hashlib
+import os.path
 import time
 import uuid
 import datetime
@@ -16,7 +17,27 @@ def api_response(code, msg, data={}, total=0):
     }
 
 
-def generate_unique_string(length=32):
+def generate_unique_string(length=32, prefix='', suffix=''):
+    """
+    Generate a unique string using UUID and timestamp.
+
+    Args:
+        length (int): The desired length of the unique string (default: 10).
+        prefix (str): An optional prefix to add to the string.
+        suffix (str): An optional suffix to add to the string.
+
+    Returns:
+        str: The generated unique string.
+    """
+
+    random_id = str(uuid.uuid4())[:length]
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    unique_string = f"{prefix}{random_id}{timestamp}{suffix}"
+
+    return unique_string
+
+
+def generate_unique_key(length=32, prefix='', suffix=''):
     """
     Generate a unique string using UUID and timestamp.
 
@@ -32,7 +53,7 @@ def generate_unique_string(length=32):
     random_id = str(uuid.uuid4())[:length]
     # timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     # unique_string = f"{prefix}{random_id}{timestamp}{suffix}"
-    # unique_string = f"{random_id}"
+    # unique_string = f"{prefix}{random_id}{suffix}"
 
     return random_id.replace('-', '').upper()
 
@@ -130,8 +151,6 @@ def generate_unique_invitation_code(user_id, length=8):
     return code
 
 
-def save_file(file, path):
-    pass
 
 
 if __name__ == '__main__':

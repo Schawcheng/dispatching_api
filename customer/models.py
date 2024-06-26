@@ -3,7 +3,9 @@ from django.db import models
 
 class CustomerModel(models.Model):
     phone = models.CharField(max_length=32)
-    password = models.CharField(max_length=16)
+    password = models.CharField(max_length=32)
+
+    points = models.DecimalField(default=0, max_digits=10, decimal_places=2)
 
     usdt_address = models.TextField(max_length=1024)
     wechat_qrcode = models.TextField(max_length=1024)

@@ -16,18 +16,11 @@ Including another URLconf
 """
 
 from django.urls import path
-from agent import views
+from customer import views
 
 urlpatterns = [
     path('register/', views.RegisterView.as_view()),
     path('login/', views.LoginView.as_view()),
-    path('subordinates/', views.SubordinatesView.as_view()),
-    path('recharges/', views.RechargesView.as_view()),
-    path('recharges/<str:recharge_no>/', views.RechargeDetailView.as_view()),
-    path('cards/', views.CardsView.as_view()),
-    path('payments/', views.PaymentTypesView.as_view()),
-    path('payments/update/', views.PaymentTypeDetailView.as_view()),
-    path('subordinates-statistics/', views.SubordinatesStatisticsView.as_view()),
-    path('my-points/', views.MyPointsView.as_view()),
-    path('my-cards-statistics/', views.MyCardsStatistic.as_view())
+    path('info/', views.CustomerInfoView.as_view()),
+    path('recycle/', views.RecycleView.as_view())
 ]

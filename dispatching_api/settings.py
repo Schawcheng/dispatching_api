@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'customer',
     'recharge',
     'withdraw',
-    'system_config'
+    'system_config',
+    'rebate'
 ]
 
 MIDDLEWARE = [

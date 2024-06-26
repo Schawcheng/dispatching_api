@@ -8,7 +8,7 @@ class AgentModel(models.Model):
 
     parent_id = models.BigIntegerField()
 
-    points = models.PositiveIntegerField(default=0)
+    points = models.DecimalField(default=0, max_digits=10, decimal_places=2)
 
     usdt_address = models.TextField(max_length=1024, null=True)
     wechat_qrcode = models.TextField(max_length=1024, null=True)
