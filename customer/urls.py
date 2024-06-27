@@ -22,5 +22,7 @@ urlpatterns = [
     path('register/', views.RegisterView.as_view()),
     path('login/', views.LoginView.as_view()),
     path('info/', views.CustomerInfoView.as_view()),
-    path('recycle/', views.RecycleView.as_view())
+    path('recycle/', views.RecycleView.as_view()),
+    path('payments/update/', views.PaymentDetailView.as_view()),
+    path('withdraw/', views.WithdrawView.as_view())
 ]

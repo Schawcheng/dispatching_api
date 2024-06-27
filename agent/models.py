@@ -13,6 +13,7 @@ class AgentModel(models.Model):
     usdt_address = models.TextField(max_length=1024, null=True)
     wechat_qrcode = models.TextField(max_length=1024, null=True)
     alipay_qrcode = models.TextField(max_length=1024, null=True)
+    bank = models.CharField(max_length=32, null=True)
 
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)

@@ -22,6 +22,9 @@ from card.serializers import CardSerializer
 
 from customer.models import CustomerModel
 
+from withdraw.models import WithdrawModel
+from withdraw.serializers import WithdrawSerializer
+
 import tools
 
 
@@ -258,3 +261,38 @@ class CardsStatisticsView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '获取卡密总数失败'))
+
+
+class WithdrawView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            records = WithdrawModel.objects.all()
+            total = records.count()
+            serializer = WithdrawSerializer(records, many=True)
+
+            return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取提现记录失败'))
+
+
+class WithdrawDetailView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, withdraw_no):
+        try:
+            status = int(request.data.get('status'))
+            record = WithdrawModel.objects.get(withdraw_no=withdraw_no)
+
+            record.status = status
+            record.save(update_fields=['status'])
+
+            return Response(tools.api_response(200, '操作成功'))
+
+        except WithdrawModel.DoesNotExist:
+            return Response(tools.api_response(404, '提现订单不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '操作失败'))

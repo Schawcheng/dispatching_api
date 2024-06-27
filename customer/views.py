@@ -1,3 +1,5 @@
+import decimal
+import os
 from django.conf import settings
 
 from rest_framework.views import APIView
@@ -6,12 +8,19 @@ from rest_framework.response import Response
 from customer.CustomTokenAuthentication import JwtTokenAuthentication
 
 from customer.models import CustomerModel
+from customer.serializers import CustomerSerializer
 
 from card.models import CardModel
 from card.serializers import CardSerializer
 from agent.models import AgentModel
 
+from withdraw.models import WithdrawModel
+from withdraw.serializers import WithdrawSerializer
+
 import tools
+
+import config.common
+import utils.upload_file
 
 
 class RegisterView(APIView):
@@ -60,12 +69,8 @@ class CustomerInfoView(APIView):
         try:
             me = request.user
 
-            data = {
-                'phone': me.phone,
-                'points': me.points
-            }
-
-            return Response(tools.api_response(200, 'ok', data=data))
+            serializer = CustomerSerializer(me)
+            return Response(tools.api_response(200, 'ok', data=serializer.data))
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '获取用户信息失败'))
@@ -123,3 +128,114 @@ class RecycleView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '回收失败'))
+
+
+class PaymentDetailView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def post(self, request):
+        try:
+            me = request.user
+            payment_type = request.data.get('payment_type')
+            content = request.data.get('file', None)
+
+            if content is None:
+                return Response(tools.api_response(401, '请选择有效的内容上传'))
+
+            record_customer = CustomerModel.objects.get(pk=me.pk)
+
+            if payment_type == 'bank':
+                record_customer.bank = content
+                record_customer.save(update_fields=['bank'])
+                return Response(tools.api_response(401, '银行卡号上传成功'))
+
+            if payment_type == 'usdt':
+                record_customer.usdt_address = content
+                record_customer.save(update_fields=['usdt_address'])
+                return Response(tools.api_response(200, 'usdt地址修改成功'))
+
+            qrcode_suffix = os.path.splitext(content.name)[-1]
+
+            if qrcode_suffix not in ['.jpg', '.jpeg', '.png']:
+                return Response(tools.api_response(401, '仅支持 jpg, jpeg, png 格式的文件'))
+
+            if payment_type == 'alipay':
+                qrcode_path, qrcode_filename = utils.upload_file.handle_upload_file_save_path(
+                    config.common.CUSTOMER_QRCODE_ROOT_DIR,
+                    qrcode_suffix, prefix='alipay-')
+
+                utils.upload_file.save_django_upload_file(content, qrcode_path)
+                qrcode_url = utils.upload_file.generate_file_url(config.common.CUSTOMER_QRCODE_ROOT_URL,
+                                                                 qrcode_filename)
+
+                record_customer.alipay_qrcode = qrcode_url
+                record_customer.save(update_fields=['alipay_qrcode'])
+                return Response(tools.api_response(200, '上传支付宝收款码成功'))
+
+            if payment_type == 'wechat':
+                qrcode_path, qrcode_filename = utils.upload_file.handle_upload_file_save_path(
+                    config.common.CUSTOMER_QRCODE_ROOT_DIR, qrcode_suffix, prefix='wechat-')
+
+                utils.upload_file.save_django_upload_file(content, qrcode_path)
+                qrcode_url = utils.upload_file.generate_file_url(config.common.CUSTOMER_QRCODE_ROOT_URL,
+                                                                 qrcode_filename)
+
+                record_customer.wechat_qrcode = qrcode_url
+                record_customer.save(update_fields=['wechat_qrcode'])
+                return Response(tools.api_response(200, '上传微信收款码成功'))
+
+            return Response(tools.api_response(401, '不支持此收款方式'))
+
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '上传失败'))
+
+
+class WithdrawView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            records = WithdrawModel.objects.filter(is_agent=0, user_id=me.pk)
+            status = int(request.GET.get('status'))
+
+            if status > -1:
+                records = records.filter(status=status)
+
+            total = records.count()
+            serializer = WithdrawSerializer(records, many=True)
+
+            return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取提现记录失败'))
+
+    def post(self, request):
+        try:
+            me = request.user
+            points = decimal.Decimal(request.data.get('points'))
+            payment_type = int(request.data.get('payment_type'))
+
+            if points > me.points:
+                return Response(tools.api_response(401, '余额不足'))
+
+            record_withdraw = WithdrawModel(
+                withdraw_no=tools.generate_unique_order_number(),
+                points=points,
+                user_id=me.pk,
+                is_agent=0,
+                payment_type=payment_type,
+                status=0
+            )
+
+            record_withdraw.save()
+
+            me.points -= points
+            me.save(update_fields=['points'])
+
+            return Response(tools.api_response(200, '提现申请成功'))
+
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '提现申请失败'))

@@ -7,9 +7,10 @@ class CustomerModel(models.Model):
 
     points = models.DecimalField(default=0, max_digits=10, decimal_places=2)
 
-    usdt_address = models.TextField(max_length=1024)
-    wechat_qrcode = models.TextField(max_length=1024)
-    alipay_qrcode = models.TextField(max_length=1024)
+    usdt_address = models.TextField(max_length=1024, null=True)
+    wechat_qrcode = models.TextField(max_length=1024, null=True)
+    alipay_qrcode = models.TextField(max_length=1024, null=True)
+    bank = models.CharField(max_length=32, null=True)
 
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)

@@ -28,5 +28,7 @@ urlpatterns = [
     path('system-configs/<int:config_id>/', views.SystemConfigDetailView.as_view()),
     path('recharges-statistics/', views.RechargesStatisticsView.as_view()),
     path('recycle/', views.RecycleView.as_view()),
-    path('cards-statistics/', views.CardsStatisticsView.as_view())
+    path('cards-statistics/', views.CardsStatisticsView.as_view()),
+    path('withdraw/', views.WithdrawView.as_view()),
+    path('withdraw/<str:withdraw_no>/', views.WithdrawDetailView.as_view()),
 ]
