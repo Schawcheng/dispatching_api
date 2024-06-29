@@ -355,6 +355,24 @@ class MyInfoView(APIView):
             print(e)
             return Response(tools.api_response(500, '获取个人信息失败'))
 
+    def put(self, request):
+        try:
+            me = request.user
+            password = request.data.get('password', None)
+
+            if password is None:
+                return Response(tools.api_response(401, '密码不能为空'))
+
+            record = AgentModel.objects.get(pk=me.pk)
+            record.password = password
+            record.save(update_fields=['password'])
+            return Response(tools.api_response(200, '修改成功'))
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '账号不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '修改失败'))
+
 
 class TotalTransactionsStatisticsView(APIView):
     authentication_classes = [JwtTokenAuthentication]
