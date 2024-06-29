@@ -55,6 +55,55 @@ class AgentsView(APIView):
 
         return Response(tools.api_response(200, 'OK', data=serializer.data, total=total))
 
+    def post(self, request):
+        try:
+            account = request.data.get('account', None)
+            master = request.data.get('master', None)
+            password = request.data.get('password', None)
+
+            if account is None:
+                return Response(tools.api_response(401, '请输入有效的账号'))
+
+            record_agent = AgentModel.objects.filter(phone=account).first()
+            if record_agent is not None:
+                return Response(tools.api_response(401, '此账号已存在'))
+
+            master_id = -1
+            if master is not None:
+                record_master = AgentModel.objects.filter(phone=master).first()
+                if record_master is None:
+                    return Response(tools.api_response(401, '此上级账号不存在'))
+                master_id = record_master.pk
+
+            if password is None:
+                password = '123456'
+            agent_obj = AgentModel(
+                phone=account,
+                password=password,
+                parent_id=master_id,
+            )
+            agent_obj.save()
+            agent_obj.invitation_code = tools.generate_unique_invitation_code(agent_obj.pk)
+            agent_obj.save(update_fields=['invitation_code'])
+
+            return Response(tools.api_response(200, '添加成功'))
+        except Exception as e:
+            traceback.print_exc(e)
+            return Response(tools.api_response(500, '添加失败'))
+
+
+class AgentDetailView(APIView):
+    def delete(self, request, agent_id):
+        try:
+            record = AgentModel.objects.get(pk=agent_id)
+            record.delete()
+            return Response(tools.api_response(200, '删除成功'))
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '此代理不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '删除失败'))
+
 
 class SystemConfigsView(APIView):
     authentication_classes = [JwtTokenAuthentication]

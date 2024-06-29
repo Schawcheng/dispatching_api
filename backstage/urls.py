@@ -21,6 +21,7 @@ from backstage import views
 urlpatterns = [
     path('login/', views.LoginView.as_view()),
     path('agents/', views.AgentsView.as_view()),
+    path('agents/<int:agent_id>/', views.AgentDetailView.as_view()),
     path('recharges/', views.RechargesView.as_view()),
     path('recharges/<int:recharge_id>/', views.RechargeDetailView.as_view()),
     path('cards/', views.CardsView.as_view()),
