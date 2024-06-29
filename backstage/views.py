@@ -135,14 +135,14 @@ class CardsView(APIView):
         try:
             agent_id = request.data.get('agent_id')
             points = request.data.get('points')
-            quantity = request.data.get('quantity')
+            quantity = int(request.data.get('quantity'))
 
             record_agent = AgentModel.objects.get(pk=agent_id)
 
             if points * quantity > record_agent.points:
                 return Response(tools.api_response(401, '积分不足以对应数量的卡密扣取'))
 
-            record_agent.points -= points
+            record_agent.points -= points * quantity
 
             record_agent.save(update_fields=['points'])
 

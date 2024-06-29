@@ -1,3 +1,5 @@
+import datetime
+import decimal
 import os.path
 import traceback
 
@@ -16,6 +18,9 @@ from recharge.serializers import RechargeSerializer
 
 from card.models import CardModel
 from card.serializers import CardSerializer
+
+from withdraw.models import WithdrawModel
+from withdraw.serializers import WithdrawSerializer
 
 import tools
 
@@ -181,7 +186,8 @@ class PaymentTypesView(APIView):
             ret = {
                 'usdt': record_agent.usdt_address,
                 'alipay': record_agent.alipay_qrcode,
-                'wechat': record_agent.wechat_qrcode
+                'wechat': record_agent.wechat_qrcode,
+                'bank': record_agent.bank
             }
             return Response(tools.api_response(200, 'ok', data=ret))
         except Exception:
@@ -206,6 +212,11 @@ class PaymentTypeDetailView(APIView):
                 record_agent.usdt_address = content
                 record_agent.save(update_fields=['usdt_address'])
                 return Response(tools.api_response(200, 'usdt地址修改成功'))
+
+            if payment_type == 'bank':
+                record_agent.bank = content
+                record_agent.save(update_fields=['bank'])
+                return Response(tools.api_response(200, '银行卡账号修改成功'))
 
             qrcode_suffix = os.path.splitext(content.name)[-1]
 
@@ -235,6 +246,7 @@ class PaymentTypeDetailView(APIView):
                 record_agent.save(update_fields=['wechat_qrcode'])
                 return Response(tools.api_response(200, '上传微信收款码成功'))
 
+            return Response(tools.api_response(404, '暂时不支持的收款方式'))
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '上传失败'))
@@ -279,3 +291,98 @@ class MyCardsStatistic(APIView):
             return Response(tools.api_response(200, 'ok', total=total))
         except Exception:
             return Response(tools.api_response(500, '获取卡密总数失败'))
+
+
+class WithdrawsView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            status = int(request.GET.get('status'))
+            records = WithdrawModel.objects.filter(is_agent=1, user_id=me.pk)
+
+            if status > 0:
+                records = records.filter(status=status)
+
+            total = records.count()
+
+            serializer = WithdrawSerializer(records, many=True)
+
+            return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取提现记录失败'))
+
+    def post(self, request):
+        try:
+            me = request.user
+            points = decimal.Decimal(request.data.get('points'))
+            payment_type = int(request.data.get('payment_type'))
+
+            if points < 0:
+                return Response(tools.api_response(401, '请输入有效的提现金额'))
+
+            if points > me.points:
+                return Response(tools.api_response(401, '提现金额不能大于您的余额'))
+
+            record_withdraw = WithdrawModel(
+                withdraw_no=tools.generate_unique_order_number(),
+                points=points,
+                user_id=me.pk,
+                is_agent=1,
+                payment_type=payment_type,
+                status=0
+            )
+            record_withdraw.save()
+            me.points -= points
+            me.save(update_fields=['points'])
+            return Response(tools.api_response(200, '提现申请成功，等待客服审核'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '提现申请失败'))
+
+
+class MyInfoView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            serializer = AgentSerializer(me)
+            return Response(tools.api_response(200, 'ok', data=serializer.data))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取个人信息失败'))
+
+
+class TotalTransactionsStatisticsView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            records_agent = AgentModel.objects.filter(parent_id=me.pk)
+
+            transaction_total = 0
+            today_total = 0
+            for item in records_agent:
+                records_card = CardModel.objects.filter(agent_id=item.pk, status=3)
+                transaction_total += records_card.count()
+
+                today = datetime.datetime.now().date()
+                records_card = records_card.filter(create_time__gte=today)
+                today_total += records_card.count()
+
+            my_total = CardModel.objects.filter(agent_id=me.pk, status=3).count()
+
+            data = {
+                'transaction_total': transaction_total,
+                'today_total': today_total,
+                'my_total': my_total
+            }
+
+            return Response(tools.api_response(200, 'ok', data=data))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取团队总交易量失败'))

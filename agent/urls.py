@@ -24,10 +24,13 @@ urlpatterns = [
     path('subordinates/', views.SubordinatesView.as_view()),
     path('recharges/', views.RechargesView.as_view()),
     path('recharges/<str:recharge_no>/', views.RechargeDetailView.as_view()),
+    path('withdraws/', views.WithdrawsView.as_view()),
     path('cards/', views.CardsView.as_view()),
     path('payments/', views.PaymentTypesView.as_view()),
     path('payments/update/', views.PaymentTypeDetailView.as_view()),
     path('subordinates-statistics/', views.SubordinatesStatisticsView.as_view()),
+    path('my-info/', views.MyInfoView.as_view()),
     path('my-points/', views.MyPointsView.as_view()),
-    path('my-cards-statistics/', views.MyCardsStatistic.as_view())
+    path('my-cards-statistics/', views.MyCardsStatistic.as_view()),
+    path('team-total-transaction-statistics/', views.TotalTransactionsStatisticsView.as_view())
 ]

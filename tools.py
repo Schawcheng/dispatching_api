@@ -63,7 +63,7 @@ def generate_jwt(user_id, username, secret_key, algorithm="HS256"):
         'user_id': user_id,
         'username': username,
         'iat': datetime.datetime.utcnow().timestamp(),
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
     }
     return jwt.encode(payload, secret_key, algorithm=algorithm)
 
