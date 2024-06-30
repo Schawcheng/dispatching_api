@@ -204,7 +204,6 @@ class PaymentTypesView(APIView):
                 'usdt': record_agent.usdt_address,
                 'alipay': record_agent.alipay_qrcode,
                 'wechat': record_agent.wechat_qrcode,
-                # TODO: 银行卡信息待修改
                 'bank': dict_bank
             }
             return Response(tools.api_response(200, 'ok', data=ret))
@@ -324,47 +323,6 @@ class BanksView(APIView):
             return Response(tools.api_response(500, '绑定失败'))
 
 
-class MyPointsView(APIView):
-    authentication_classes = [JwtTokenAuthentication]
-
-    def get(self, request):
-        try:
-            me = request.user
-            record_agent = AgentModel.objects.get(pk=me.pk)
-            points = record_agent.points
-
-            return Response(tools.api_response(200, 'ok', data={'points': points}))
-        except Exception as e:
-            print(e)
-            return Response(tools.api_response(500, '获取我的积分失败'))
-
-
-class SubordinatesStatisticsView(APIView):
-    authentication_classes = [JwtTokenAuthentication]
-
-    def get(self, request):
-        try:
-            me = request.user
-            records_agent = AgentModel.objects.filter(parent_id=me.pk)
-            total = records_agent.count()
-            return Response(tools.api_response(200, 'ok', total=total))
-        except Exception:
-            return Response(tools.api_response(500, '获取团队人数失败'))
-
-
-class MyCardsStatistic(APIView):
-    authentication_classes = [JwtTokenAuthentication]
-
-    def get(self, request):
-        try:
-            me = request.user
-            record_cards = CardModel.objects.filter(agent_id=me.pk)
-            total = record_cards.count()
-            return Response(tools.api_response(200, 'ok', total=total))
-        except Exception:
-            return Response(tools.api_response(500, '获取卡密总数失败'))
-
-
 class WithdrawsView(APIView):
     authentication_classes = [JwtTokenAuthentication]
 
@@ -447,38 +405,6 @@ class MyInfoView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '修改失败'))
-
-
-class TotalTransactionsStatisticsView(APIView):
-    authentication_classes = [JwtTokenAuthentication]
-
-    def get(self, request):
-        try:
-            me = request.user
-            records_agent = AgentModel.objects.filter(parent_id=me.pk)
-
-            transaction_total = 0
-            today_total = 0
-            for item in records_agent:
-                records_card = CardModel.objects.filter(agent_id=item.pk, status=3)
-                transaction_total += records_card.count()
-
-                today = datetime.datetime.now().date()
-                records_card = records_card.filter(create_time__gte=today)
-                today_total += records_card.count()
-
-            my_total = CardModel.objects.filter(agent_id=me.pk, status=3).count()
-
-            data = {
-                'transaction_total': transaction_total,
-                'today_total': today_total,
-                'my_total': my_total
-            }
-
-            return Response(tools.api_response(200, 'ok', data=data))
-        except Exception as e:
-            print(e)
-            return Response(tools.api_response(500, '获取团队总交易量失败'))
 
 
 class SupportDetailView(APIView):

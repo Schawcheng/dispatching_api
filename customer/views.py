@@ -32,7 +32,7 @@ class RegisterView(APIView):
             phone = request.data.get('phone')
             password = request.data.get('password')
 
-            record_customer = CustomerModel.objects.filter(phone=phone)
+            record_customer = CustomerModel.objects.filter(phone=phone).first()
 
             if record_customer is not None:
                 return Response(tools.api_response(401, '此账号已被注册'))

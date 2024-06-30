@@ -29,10 +29,6 @@ urlpatterns = [
     path('payments/', views.PaymentTypesView.as_view()),
     path('payments/update/', views.PaymentTypeDetailView.as_view()),
     path('banks/', views.BanksView.as_view()),
-    path('subordinates-statistics/', views.SubordinatesStatisticsView.as_view()),
     path('my-info/', views.MyInfoView.as_view()),
     path('support/', views.SupportDetailView.as_view()),
-    path('my-points/', views.MyPointsView.as_view()),
-    path('my-cards-statistics/', views.MyCardsStatistic.as_view()),
-    path('team-total-transaction-statistics/', views.TotalTransactionsStatisticsView.as_view())
 ]

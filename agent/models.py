@@ -14,12 +14,15 @@ class AgentModel(models.Model):
     wechat_qrcode = models.TextField(max_length=1024, null=True)
     alipay_qrcode = models.TextField(max_length=1024, null=True)
 
-    lv1_rate = models.DecimalField(max_digits=4, decimal_places=2)
-    lv2_rate = models.DecimalField(max_digits=4, decimal_places=2)
-    lv3_rate = models.DecimalField(max_digits=4, decimal_places=2)
+    lv1_rate = models.DecimalField(max_digits=6, decimal_places=4, default=0)
+    lv2_rate = models.DecimalField(max_digits=6, decimal_places=4, default=0)
+    lv3_rate = models.DecimalField(max_digits=6, decimal_places=4, default=0)
 
-    total_transaction = models.PositiveIntegerField(default=0)
-    today_transaction = models.PositiveIntegerField(default=0)
+    # my_total_transaction = models.PositiveIntegerField(default=0)
+    # my_today_transaction = models.PositiveIntegerField(default=0)
+    #
+    # team_total_transaction = models.PositiveIntegerField(default=0)
+    # team_today_transaction = models.PositiveIntegerField(default=0)
 
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)

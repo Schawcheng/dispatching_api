@@ -20,14 +20,7 @@ def create_admin_account():
 
 
 def create_system_config():
-    lv1 = SystemConfigModel(title='lv1', value='0.20', description='一级反水率')
-    lv2 = SystemConfigModel(title='lv2', value='0.10', description='二级反水率')
-    lv3 = SystemConfigModel(title='lv3', value='0.05', description='三级反水率')
     support = SystemConfigModel(title='tg_support', value='https://t.me/longgefacai', description='TG客服')
-
-    lv1.save()
-    lv2.save()
-    lv3.save()
     support.save()
 
 
@@ -47,3 +40,6 @@ def create_upload_dir():
 
 if __name__ == '__main__':
     create_upload_dir()
+    create_system_config()
+    create_admin_account()
+

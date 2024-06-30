@@ -93,6 +93,8 @@ class AgentsView(APIView):
 
 
 class AgentDetailView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
     def delete(self, request, agent_id):
         try:
             record = AgentModel.objects.get(pk=agent_id)
@@ -103,6 +105,156 @@ class AgentDetailView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '删除失败'))
+
+
+class AgentPointsView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, agent_id):
+        try:
+            points = request.data.get('points', None)
+
+            if points is None:
+                return Response(tools.api_response(401, '请输入积分'))
+
+            points = decimal.Decimal(points)
+            record_agent = AgentModel.objects.get(pk=agent_id)
+
+            record_agent.points = points
+            record_agent.save(update_fields=['points'])
+            return Response(tools.api_response(200, '修改成功'))
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '此代理不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '修改失败'))
+
+
+class AgentParentView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, agent_id):
+        try:
+            parent_account = request.data.get('parent_account', None)
+            if parent_account is None:
+                return Response(tools.api_response(401, '请输入推荐人账号'))
+
+            parent = AgentModel.objects.filter(phone=parent_account).first()
+            if parent is None:
+                return Response(tools.api_response(404, '此推荐人账号不存在'))
+
+            current_agent = AgentModel.objects.get(pk=agent_id)
+
+            if current_agent.phone == parent_account:
+                return Response(tools.api_response(401, '推荐人不能是自己'))
+            current_agent.parent_id = parent.pk
+            current_agent.save(update_fields=['parent_id'])
+            return Response(tools.api_response(200, '修改成功'))
+
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '此代理不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '修改失败'))
+
+
+class AgentLv1RateView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, agent_id):
+        try:
+            lv1_rate = request.data.get('lv1_rate', None)
+
+            if lv1_rate is None:
+                return Response(tools.api_response(401, '请输入一级反水率'))
+
+            lv1_rate = decimal.Decimal(lv1_rate)
+
+            record_agent = AgentModel.objects.get(pk=agent_id)
+
+            record_agent.lv1_rate = lv1_rate
+            record_agent.save(update_fields=['lv1_rate'])
+
+            return Response(tools.api_response(200, '修改成功'))
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '此代理不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '修改失败'))
+
+
+class AgentLv2RateView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, agent_id):
+        try:
+            lv2_rate = request.data.get('lv2_rate', None)
+
+            if lv2_rate is None:
+                return Response(tools.api_response(401, '请输入二级反水率'))
+
+            lv2_rate = decimal.Decimal(lv2_rate)
+
+            record_agent = AgentModel.objects.get(pk=agent_id)
+
+            record_agent.lv2_rate = lv2_rate
+            record_agent.save(update_fields=['lv2_rate'])
+
+            return Response(tools.api_response(200, '修改成功'))
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '此代理不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '修改失败'))
+
+
+class AgentLv3RateView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, agent_id):
+        try:
+            lv3_rate = request.data.get('lv3_rate', None)
+
+            if lv3_rate is None:
+                return Response(tools.api_response(401, '请输入三级反水率'))
+
+            lv3_rate = decimal.Decimal(lv3_rate)
+
+            record_agent = AgentModel.objects.get(pk=agent_id)
+
+            record_agent.lv3_rate = lv3_rate
+            record_agent.save(update_fields=['lv3_rate'])
+
+            return Response(tools.api_response(200, '修改成功'))
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '此代理不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '修改失败'))
+
+
+class AgentPasswordView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def put(self, request, agent_id):
+        try:
+            new_password = request.data.get('new_password', None)
+
+            if new_password is None:
+                return Response(tools.api_response(401, '请输入新密码'))
+
+            record_agent = AgentModel.objects.get(pk=agent_id)
+
+            record_agent.password = new_password
+            record_agent.save(update_fields=['password'])
+
+            return Response(tools.api_response(200, '修改成功'))
+
+        except AgentModel.DoesNotsExist:
+            return Response(tools.api_response(404, '此代理不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '修改失败'))
 
 
 class SystemConfigsView(APIView):
@@ -150,18 +302,34 @@ class RechargeDetailView(APIView):
 
     def put(self, request, recharge_id):
         try:
-            status = request.data.get('status')
-
             record_recharge = RechargeModel.objects.get(pk=recharge_id)
-            record_recharge.status = status
-            record_recharge.save()
+            record_recharge.status = 1
+            record_recharge.save(update_fields=['status'])
 
-            if status == 1:
-                record_agent = AgentModel.objects.get(pk=record_recharge.agent_id)
-                record_agent.points += record_recharge.points
-                record_agent.save(update_fields=['points'])
+            record_agent = AgentModel.objects.get(pk=record_recharge.agent_id)
+            record_agent.points += record_recharge.points
+            record_agent.save(update_fields=['points'])
 
-            return Response(tools.api_response(200, '操作成功'))
+            lv1_agent = AgentModel.objects.filter(pk=record_agent.parent_id).first()
+            if lv1_agent is not None:
+                lv1_agent.points += record_recharge.points * lv1_agent.lv1_rate
+                lv1_agent.save(update_fields=['points'])
+
+                lv2_agent = AgentModel.objects.filter(pk=lv1_agent.parent_id).first()
+                if lv2_agent is not None:
+                    lv2_agent.points += record_recharge.points * lv2_agent.lv2_rate
+                    lv2_agent.save(update_fields=['points'])
+
+                    lv3_agent = AgentModel.objects.filter(pk=lv2_agent.parent_id).first()
+                    if lv3_agent is not None:
+                        lv3_agent.points += record_recharge.points * lv3_agent.lv3_rate
+                        lv3_agent.save(update_fields=['points'])
+
+            return Response(tools.api_response(200, '审核成功'))
+        except RechargeModel.DoesNotExist:
+            return Response(tools.api_response(404, '当前操作的充值记录不存在'))
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '当前操作的充值记录对应的代理账号可能已经被删除'))
         except Exception:
             return Response(tools.api_response(500, '操作失败'))
 
@@ -183,7 +351,7 @@ class CardsView(APIView):
     def post(self, request):
         try:
             agent_id = request.data.get('agent_id')
-            points = request.data.get('points')
+            points = decimal.Decimal(request.data.get('points'))
             quantity = int(request.data.get('quantity'))
 
             record_agent = AgentModel.objects.get(pk=agent_id)
@@ -203,37 +371,7 @@ class CardsView(APIView):
                     agent_id=agent_id,
                 )
                 card_obj.save()
-
-            lv1_agent = AgentModel.objects.filter(pk=record_agent.parent_id).first()
-
-            lv2_agent = None
-
-            lv3_agent = None
-
-            if lv1_agent is not None:
-                lv2_agent = AgentModel.objects.filter(pk=lv1_agent.parent_id).first()
-
-            if lv2_agent is not None:
-                lv3_agent = AgentModel.objects.filter(pk=lv2_agent.parent_id).first()
-
-            lv1_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv1').value)
-            lv2_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv2').value)
-            lv3_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv3').value)
-
-            if lv1_agent is not None:
-                lv1_agent.points += points * quantity * lv1_rate
-                lv1_agent.save(update_fields=['points'])
-
-            if lv2_agent is not None:
-                lv2_agent.points += points * quantity * lv2_rate
-                lv2_agent.save(update_fields=['points'])
-
-            if lv3_agent is not None:
-                lv3_agent.points += points * quantity * lv3_rate
-                lv3_agent.save(update_fields=['points'])
-
             return Response(tools.api_response(200, '发卡成功'))
-
         except AgentModel.DoesNotExist:
             return Response(tools.api_response(404, '当前代理不存在'))
 
