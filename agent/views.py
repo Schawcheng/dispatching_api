@@ -286,7 +286,7 @@ class BanksView(APIView):
             me = request.user
             username = request.data.get('username', None)
             bank_name = request.data.get('bank_name', None)
-            bank_account = request.data.get('bank_account')
+            bank_account = request.data.get('bank_account', None)
             register_bank = request.data.get('register_bank', None)
 
             if not all([username, bank_name, bank_account, register_bank]):
