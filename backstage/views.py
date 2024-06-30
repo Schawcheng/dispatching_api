@@ -204,7 +204,38 @@ class CardsView(APIView):
                 )
                 card_obj.save()
 
+            lv1_agent = AgentModel.objects.filter(pk=record_agent.parent_id).first()
+
+            lv2_agent = None
+
+            lv3_agent = None
+
+            if lv1_agent is not None:
+                lv2_agent = AgentModel.objects.filter(pk=lv1_agent.parent_id).first()
+
+            if lv2_agent is not None:
+                lv3_agent = AgentModel.objects.filter(pk=lv2_agent.parent_id).first()
+
+            lv1_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv1').value)
+            lv2_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv2').value)
+            lv3_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv3').value)
+
+            if lv1_agent is not None:
+                lv1_agent.points += points * quantity * lv1_rate
+                lv1_agent.save(update_fields=['points'])
+
+            if lv2_agent is not None:
+                lv2_agent.points += points * quantity * lv2_rate
+                lv2_agent.save(update_fields=['points'])
+
+            if lv3_agent is not None:
+                lv3_agent.points += points * quantity * lv3_rate
+                lv3_agent.save(update_fields=['points'])
+
             return Response(tools.api_response(200, '发卡成功'))
+
+        except AgentModel.DoesNotExist:
+            return Response(tools.api_response(404, '当前代理不存在'))
 
         except Exception as e:
             traceback.print_exc(e)
@@ -243,36 +274,6 @@ class RecycleView(APIView):
 
             record_card = CardModel.objects.get(key=key)
             record_customer = CustomerModel.objects.get(pk=record_card.customer_id)
-
-            current_agent = AgentModel.objects.get(pk=record_card.agent_id)
-
-            lv1_agent = AgentModel.objects.filter(pk=current_agent.parent_id).first()
-
-            lv2_agent = None
-
-            lv3_agent = None
-
-            if lv1_agent is not None:
-                lv2_agent = AgentModel.objects.filter(pk=lv1_agent.parent_id).first()
-
-            if lv2_agent is not None:
-                lv3_agent = AgentModel.objects.filter(pk=lv2_agent.parent_id).first()
-
-            lv1_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv1').value)
-            lv2_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv2').value)
-            lv3_rate = decimal.Decimal(SystemConfigModel.objects.get(title='lv3').value)
-
-            if lv1_agent is not None:
-                lv1_agent.points += record_card.points * lv1_rate
-                lv1_agent.save(update_fields=['points'])
-
-            if lv2_agent is not None:
-                lv2_agent.points += record_card.points * lv2_rate
-                lv2_agent.save(update_fields=['points'])
-
-            if lv3_agent is not None:
-                lv3_agent.points += record_card.points * lv3_rate
-                lv3_agent.save(update_fields=['points'])
 
             record_card.status = 3
             record_card.save(update_fields=['status'])

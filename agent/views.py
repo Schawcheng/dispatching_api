@@ -24,6 +24,9 @@ from withdraw.serializers import WithdrawSerializer
 
 from system_config.models import SystemConfigModel
 
+from bank.models import BankModel
+from bank.serializers import BankSerializer
+
 import tools
 
 import utils.upload_file
@@ -189,6 +192,7 @@ class PaymentTypesView(APIView):
                 'usdt': record_agent.usdt_address,
                 'alipay': record_agent.alipay_qrcode,
                 'wechat': record_agent.wechat_qrcode,
+                # TODO: 银行卡信息待修改
                 'bank': record_agent.bank
             }
             return Response(tools.api_response(200, 'ok', data=ret))
@@ -214,11 +218,6 @@ class PaymentTypeDetailView(APIView):
                 record_agent.usdt_address = content
                 record_agent.save(update_fields=['usdt_address'])
                 return Response(tools.api_response(200, 'usdt地址修改成功'))
-
-            if payment_type == 'bank':
-                record_agent.bank = content
-                record_agent.save(update_fields=['bank'])
-                return Response(tools.api_response(200, '银行卡账号修改成功'))
 
             qrcode_suffix = os.path.splitext(content.name)[-1]
 
@@ -252,6 +251,52 @@ class PaymentTypeDetailView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '上传失败'))
+
+
+class BanksView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            record_bank = BankModel.objects.filter(user_id=me.pk, is_agent=1).first()
+            serializer = BankSerializer(record_bank)
+            return Response(tools.api_response(200, 'ok', data=serializer.data))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取银行卡信息失败'))
+
+    def post(self, request):
+        try:
+            me = request.user
+            username = request.data.get('username', None)
+            bank_name = request.data.get('bank_name', None)
+            bank_account = request.data.get('bank_account')
+            register_bank = request.data.get('register_bank', None)
+
+            if not all([username, bank_name, bank_account, register_bank]):
+                return Response(tools.api_response(401, '银行卡信息不完整'))
+
+            record_bank = BankModel.objects.filter(bank_account=bank_account).first()
+
+            if record_bank is not None:
+                return Response(tools.api_response(401, '此银行卡已经被添加'))
+
+            bank_obj = BankModel(
+                username=username,
+                bank_name=bank_name,
+                bank_account=bank_account,
+                register_bank=register_bank,
+                user_id=me.pk,
+                is_agent=1
+            )
+            bank_obj.save()
+
+            return Response(tools.api_response(200, '绑定成功'))
+
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '绑定失败'))
 
 
 class MyPointsView(APIView):
