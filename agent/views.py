@@ -188,12 +188,24 @@ class PaymentTypesView(APIView):
             me = request.user
             record_agent = AgentModel.objects.get(pk=me.pk)
 
+            record_bank = BankModel.objects.filter(user_id=me.pk, is_agent=1).first()
+
+            dict_bank = None
+
+            if record_bank is not None:
+                dict_bank = {
+                    'username': record_bank.username,
+                    'bank_name': record_bank.bank_name,
+                    'bank_account': record_bank.bank_account,
+                    'register_bank': record_bank.register_bank
+                }
+
             ret = {
                 'usdt': record_agent.usdt_address,
                 'alipay': record_agent.alipay_qrcode,
                 'wechat': record_agent.wechat_qrcode,
                 # TODO: 银行卡信息待修改
-                'bank': record_agent.bank
+                'bank': dict_bank
             }
             return Response(tools.api_response(200, 'ok', data=ret))
         except Exception:
@@ -260,6 +272,9 @@ class BanksView(APIView):
         try:
             me = request.user
             record_bank = BankModel.objects.filter(user_id=me.pk, is_agent=1).first()
+
+            if record_bank is None:
+                return Response(tools.api_response(200, 'ok', data=None))
             serializer = BankSerializer(record_bank)
             return Response(tools.api_response(200, 'ok', data=serializer.data))
         except Exception as e:
@@ -277,10 +292,20 @@ class BanksView(APIView):
             if not all([username, bank_name, bank_account, register_bank]):
                 return Response(tools.api_response(401, '银行卡信息不完整'))
 
-            record_bank = BankModel.objects.filter(bank_account=bank_account).first()
+            record_bank = BankModel.objects.filter(user_id=me.pk, is_agent=1).first()
 
             if record_bank is not None:
-                return Response(tools.api_response(401, '此银行卡已经被添加'))
+                record_bank.username = username
+                record_bank.bank_name = bank_name
+                record_bank.bank_account = bank_account
+                record_bank.register_bank = register_bank
+                record_bank.save(update_fields=[
+                    'username',
+                    'bank_name',
+                    'bank_account',
+                    'register_bank'
+                ])
+                return Response(tools.api_response(200, '修改成功'))
 
             bank_obj = BankModel(
                 username=username,
@@ -367,8 +392,11 @@ class WithdrawsView(APIView):
             points = decimal.Decimal(request.data.get('points'))
             payment_type = int(request.data.get('payment_type'))
 
-            if points < 0:
-                return Response(tools.api_response(401, '请输入有效的提现金额'))
+            if me.points <= 0:
+                return Response(tools.api_response(401, '余额不足以提现'))
+
+            if points < 50:
+                return Response(tools.api_response(401, '提现金额最低为50'))
 
             if points > me.points:
                 return Response(tools.api_response(401, '提现金额不能大于您的余额'))

@@ -1,3 +1,5 @@
+import json
+
 from rest_framework import serializers
 from rest_framework.serializers import SerializerMethodField
 
@@ -5,6 +7,7 @@ from withdraw.models import WithdrawModel
 
 from customer.models import CustomerModel
 from agent.models import AgentModel
+from bank.models import BankModel
 
 
 class WithdrawSerializer(serializers.ModelSerializer):
@@ -33,7 +36,16 @@ class WithdrawSerializer(serializers.ModelSerializer):
             return user.wechat_qrcode
 
         if obj.payment_type == 3:
-            return user.bank
+            bank_obj = BankModel.objects.filter(user_id=user.pk, is_agent=obj.is_agent).first()
+
+            ret = {
+                'username': bank_obj.username,
+                'bank_name': bank_obj.bank_name,
+                'bank_account': bank_obj.bank_account,
+                'register_bank': bank_obj.register_bank
+            }
+
+            return json.dumps(ret)
 
         if obj.payment_type == 4:
             return user.usdt_address

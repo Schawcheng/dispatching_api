@@ -17,6 +17,9 @@ from agent.models import AgentModel
 from withdraw.models import WithdrawModel
 from withdraw.serializers import WithdrawSerializer
 
+from bank.models import BankModel
+from bank.serializers import BankSerializer
+
 import tools
 
 import config.common
@@ -28,6 +31,11 @@ class RegisterView(APIView):
         try:
             phone = request.data.get('phone')
             password = request.data.get('password')
+
+            record_customer = CustomerModel.objects.filter(phone=phone)
+
+            if record_customer is not None:
+                return Response(tools.api_response(401, '此账号已被注册'))
 
             record = CustomerModel(phone=phone, password=password)
             record.save()
@@ -142,18 +150,6 @@ class PaymentDetailView(APIView):
             if content is None:
                 return Response(tools.api_response(401, '请选择有效的内容上传'))
 
-            record_customer = CustomerModel.objects.get(pk=me.pk)
-
-            if payment_type == 'bank':
-                record_customer.bank = content
-                record_customer.save(update_fields=['bank'])
-                return Response(tools.api_response(401, '银行卡号上传成功'))
-
-            if payment_type == 'usdt':
-                record_customer.usdt_address = content
-                record_customer.save(update_fields=['usdt_address'])
-                return Response(tools.api_response(200, 'usdt地址修改成功'))
-
             qrcode_suffix = os.path.splitext(content.name)[-1]
 
             if qrcode_suffix not in ['.jpg', '.jpeg', '.png']:
@@ -168,8 +164,8 @@ class PaymentDetailView(APIView):
                 qrcode_url = utils.upload_file.generate_file_url(config.common.CUSTOMER_QRCODE_ROOT_URL,
                                                                  qrcode_filename)
 
-                record_customer.alipay_qrcode = qrcode_url
-                record_customer.save(update_fields=['alipay_qrcode'])
+                me.alipay_qrcode = qrcode_url
+                me.save(update_fields=['alipay_qrcode'])
                 return Response(tools.api_response(200, '上传支付宝收款码成功'))
 
             if payment_type == 'wechat':
@@ -180,8 +176,8 @@ class PaymentDetailView(APIView):
                 qrcode_url = utils.upload_file.generate_file_url(config.common.CUSTOMER_QRCODE_ROOT_URL,
                                                                  qrcode_filename)
 
-                record_customer.wechat_qrcode = qrcode_url
-                record_customer.save(update_fields=['wechat_qrcode'])
+                me.wechat_qrcode = qrcode_url
+                me.save(update_fields=['wechat_qrcode'])
                 return Response(tools.api_response(200, '上传微信收款码成功'))
 
             return Response(tools.api_response(401, '不支持此收款方式'))
@@ -189,6 +185,65 @@ class PaymentDetailView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '上传失败'))
+
+
+class BanksView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            me = request.user
+            record_bank = BankModel.objects.filter(user_id=me.pk, is_agent=0).first()
+
+            if record_bank is None:
+                return Response(tools.api_response(200, 'ok', data=None))
+            serializer = BankSerializer(record_bank)
+            return Response(tools.api_response(200, 'ok', data=serializer.data))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取银行卡信息失败'))
+
+    def post(self, request):
+        try:
+            me = request.user
+            username = request.data.get('username', None)
+            bank_name = request.data.get('bank_name', None)
+            bank_account = request.data.get('bank_account')
+            register_bank = request.data.get('register_bank', None)
+
+            if not all([username, bank_name, bank_account, register_bank]):
+                return Response(tools.api_response(401, '银行卡信息不完整'))
+
+            record_bank = BankModel.objects.filter(user_id=me.pk, is_agent=0).first()
+
+            if record_bank is not None:
+                record_bank.username = username
+                record_bank.bank_name = bank_name
+                record_bank.bank_account = bank_account
+                record_bank.register_bank = register_bank
+                record_bank.save(update_fields=[
+                    'username',
+                    'bank_name',
+                    'bank_account',
+                    'register_bank'
+                ])
+                return Response(tools.api_response(200, '修改成功'))
+
+            bank_obj = BankModel(
+                username=username,
+                bank_name=bank_name,
+                bank_account=bank_account,
+                register_bank=register_bank,
+                user_id=me.pk,
+                is_agent=0
+            )
+            bank_obj.save()
+
+            return Response(tools.api_response(200, '绑定成功'))
+
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '绑定失败'))
 
 
 class WithdrawView(APIView):
@@ -216,6 +271,9 @@ class WithdrawView(APIView):
             me = request.user
             points = decimal.Decimal(request.data.get('points'))
             payment_type = int(request.data.get('payment_type'))
+
+            if me.points <= 0:
+                return Response(tools.api_response(401, '余额不足以提现'))
 
             if points > me.points:
                 return Response(tools.api_response(401, '余额不足'))
