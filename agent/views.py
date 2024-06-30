@@ -22,6 +22,8 @@ from card.serializers import CardSerializer
 from withdraw.models import WithdrawModel
 from withdraw.serializers import WithdrawSerializer
 
+from system_config.models import SystemConfigModel
+
 import tools
 
 import utils.upload_file
@@ -404,3 +406,17 @@ class TotalTransactionsStatisticsView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '获取团队总交易量失败'))
+
+
+class SupportDetailView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            record = SystemConfigModel.objects.get(title='tg_support')
+            return Response(tools.api_response(200, 'ok', data={'support': record.value}))
+        except SystemConfigModel.DoesNotExist:
+            return Response(tools.api_response(404, '配置不存在'))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取系统配置失败'))
