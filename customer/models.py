@@ -12,6 +12,8 @@ class CustomerModel(models.Model):
     alipay_qrcode = models.TextField(max_length=1024, null=True)
     bank = models.CharField(max_length=32, null=True)
 
+    total_income = models.DecimalField(max_digits=10, decimal_places=3, default=0)
+
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
 

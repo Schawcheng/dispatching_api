@@ -18,11 +18,7 @@ class AgentModel(models.Model):
     lv2_rate = models.DecimalField(max_digits=6, decimal_places=4, default=0)
     lv3_rate = models.DecimalField(max_digits=6, decimal_places=4, default=0)
 
-    # my_total_transaction = models.PositiveIntegerField(default=0)
-    # my_today_transaction = models.PositiveIntegerField(default=0)
-    #
-    # team_total_transaction = models.PositiveIntegerField(default=0)
-    # team_today_transaction = models.PositiveIntegerField(default=0)
+    total_income = models.DecimalField(max_digits=10, decimal_places=3, default=0)
 
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)

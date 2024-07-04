@@ -310,19 +310,21 @@ class RechargeDetailView(APIView):
             record_agent.points += record_recharge.points
             record_agent.save(update_fields=['points'])
 
+            out_rate = decimal.Decimal(SystemConfigModel.objects.get(title='out_rate').value)
+
             lv1_agent = AgentModel.objects.filter(pk=record_agent.parent_id).first()
             if lv1_agent is not None:
-                lv1_agent.points += record_recharge.points * lv1_agent.lv1_rate
+                lv1_agent.points += record_recharge.points * lv1_agent.lv1_rate * out_rate
                 lv1_agent.save(update_fields=['points'])
 
                 lv2_agent = AgentModel.objects.filter(pk=lv1_agent.parent_id).first()
                 if lv2_agent is not None:
-                    lv2_agent.points += record_recharge.points * lv2_agent.lv2_rate
+                    lv2_agent.points += record_recharge.points * lv2_agent.lv2_rate * out_rate
                     lv2_agent.save(update_fields=['points'])
 
                     lv3_agent = AgentModel.objects.filter(pk=lv2_agent.parent_id).first()
                     if lv3_agent is not None:
-                        lv3_agent.points += record_recharge.points * lv3_agent.lv3_rate
+                        lv3_agent.points += record_recharge.points * lv3_agent.lv3_rate * out_rate
                         lv3_agent.save(update_fields=['points'])
 
             return Response(tools.api_response(200, '审核成功'))
@@ -352,14 +354,20 @@ class CardsView(APIView):
         try:
             agent_id = request.data.get('agent_id')
             points = decimal.Decimal(request.data.get('points'))
+            password = request.data.get('password')
             quantity = int(request.data.get('quantity'))
+
+            if password is None:
+                password = '123456'
 
             record_agent = AgentModel.objects.get(pk=agent_id)
 
             if points * quantity > record_agent.points:
                 return Response(tools.api_response(401, '积分不足以对应数量的卡密扣取'))
 
-            record_agent.points -= points * quantity
+            out_rate = decimal.Decimal(SystemConfigModel.objects.get(title='out_rate').value)
+
+            record_agent.points -= points * quantity * out_rate
 
             record_agent.save(update_fields=['points'])
 
@@ -369,6 +377,7 @@ class CardsView(APIView):
                     key=key,
                     points=points,
                     agent_id=agent_id,
+                    password=password
                 )
                 card_obj.save()
             return Response(tools.api_response(200, '发卡成功'))
@@ -416,13 +425,15 @@ class RecycleView(APIView):
             record_card.status = 3
             record_card.save(update_fields=['status'])
 
-            record_customer.points += record_card.points
-            record_customer.save(update_fields=['points'])
+            in_rate = decimal.Decimal(SystemConfigModel.objects.get(title='in_rate').value)
+
+            record_customer.points += record_card.points * in_rate
+            record_customer.save(update_fields=['points', 'total_income'])
 
             return Response(tools.api_response(200, '核销成功'))
 
         except CardModel.DoesNotExist:
-            return Response(tools.api_response(404, '卡密无效'))
+            return Response(tools.api_response(404, '卡号无效或密码错误'))
         except CustomerModel.DoesNotExist:
             return Response(tools.api_response(404, '找不到用户'))
         except Exception as e:
@@ -473,6 +484,16 @@ class WithdrawDetailView(APIView):
         try:
             status = int(request.data.get('status'))
             record = WithdrawModel.objects.get(withdraw_no=withdraw_no)
+
+            record_user = None
+            if record.is_agent == 1:
+                record_user = AgentModel.objects.get(pk=record.user_id)
+
+            if record.is_agent == 0:
+                record_user = CustomerModel.objects.get(pk=record.user_id)
+
+            record_user.total_income += record.points
+            record_user.save(update_fields=['total_income'])
 
             record.status = status
             record.save(update_fields=['status'])

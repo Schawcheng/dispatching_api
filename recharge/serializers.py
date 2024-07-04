@@ -3,14 +3,21 @@ from rest_framework.serializers import SerializerMethodField
 
 from recharge.models import RechargeModel
 from agent.models import AgentModel
+from system_config.models import SystemConfigModel
 
 
 class RechargeSerializer(serializers.ModelSerializer):
     agent = SerializerMethodField()
+    receipt_address = SerializerMethodField()
 
     def get_agent(self, obj):
         agent = AgentModel.objects.get(pk=obj.agent_id)
         return agent.phone
+
+    def get_receipt_address(self, obj):
+        record = SystemConfigModel.objects.get(title='receipt_address')
+
+        return record.value
 
     class Meta:
         model = RechargeModel

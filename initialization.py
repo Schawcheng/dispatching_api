@@ -21,7 +21,14 @@ def create_admin_account():
 
 def create_system_config():
     support = SystemConfigModel(title='tg_support', value='https://t.me/longgefacai', description='TG客服')
+    receipt_address = SystemConfigModel(title='receipt_address', value='TLWPJubZL9eauXN9RbkPt9mguQm475CBm4', description='收款地址')
+    out_rate = SystemConfigModel(title='out_rate', value='0.93', description='卖出折扣')
+    in_rate = SystemConfigModel(title='in_rate', value='0.95', description='回收折扣')
+
     support.save()
+    receipt_address.save()
+    out_rate.save()
+    in_rate.save()
 
 
 def create_upload_dir():

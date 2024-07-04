@@ -113,24 +113,38 @@ class RecycleView(APIView):
         try:
             me = request.user
             key = request.data.get('key', None)
+            password = request.data.get('password', None)
+            face_value = request.data.get('face_value', None)
+
+            if face_value is None:
+                return Response(tools.api_response(401, '请选择有效的面值'))
 
             if key is None:
-                return Response(tools.api_response(404, '卡密不能为空'))
+                return Response(tools.api_response(401, '卡号不能为空'))
 
-            record_card = CardModel.objects.get(key=key)
+            if password is None:
+                return Response(tools.api_response(401, '卡密不能为空'))
+
+            record_card = CardModel.objects.get(key=key, password=password)
 
             if record_card.status >= 2:
                 return Response(tools.api_response(401, '此卡密已被使用，请更换卡密后再试'))
 
+            face_value = decimal.Decimal(face_value)
+
+            if face_value != record_card.points:
+                return Response(tools.api_response(401, '选择的面值与您输入的卡号面值不一致'))
+
             record_customer = CustomerModel.objects.get(pk=me.pk)
 
             record_card.status = 2
+            record_card.card_no = tools.generate_unique_order_number()
             record_card.customer_id = record_customer.pk
-            record_card.save(update_fields=['status', 'customer_id'])
+            record_card.save(update_fields=['status', 'card_no', 'customer_id'])
 
             return Response(tools.api_response(200, '申请兑换成功, 请及时联系客服进行核销'))
         except CardModel.DoesNotExist:
-            return Response(tools.api_response(404, '请填写有效的卡密'))
+            return Response(tools.api_response(404, '卡号无效或卡密错误'))
         except CustomerModel.DoesNotExist:
             return Response(tools.api_response(404, '请先登录'))
         except Exception as e:

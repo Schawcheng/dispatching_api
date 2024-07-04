@@ -2,7 +2,9 @@ from django.db import models
 
 
 class CardModel(models.Model):
+    card_no = models.CharField(max_length=32, null=True)
     key = models.CharField(max_length=32)
+    password = models.CharField(max_length=32)
     points = models.PositiveIntegerField()
     discount = models.DecimalField(max_digits=4, decimal_places=2, null=True)
 
