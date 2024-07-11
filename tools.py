@@ -151,7 +151,13 @@ def generate_unique_invitation_code(user_id, length=8):
     return code
 
 
+def generate_card_password(length=8):
+    chars = string.ascii_letters + string.digits
+    random_string = ''.join(random.choice(chars) for _ in range(length))
+    return random_string
+
+
 
 
 if __name__ == '__main__':
-    print(len(generate_unique_string()))
+    print(generate_card_password())

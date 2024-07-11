@@ -359,7 +359,7 @@ class CardsView(APIView):
             quantity = int(request.data.get('quantity'))
 
             if password is None:
-                password = '123456'
+                password = tools.generate_card_password()
 
             record_agent = AgentModel.objects.get(pk=agent_id)
 
