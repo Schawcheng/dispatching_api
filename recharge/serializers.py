@@ -11,7 +11,10 @@ class RechargeSerializer(serializers.ModelSerializer):
     receipt_address = SerializerMethodField()
 
     def get_agent(self, obj):
-        agent = AgentModel.objects.get(pk=obj.agent_id)
+        agent = AgentModel.objects.filter(pk=obj.agent_id).first()
+
+        if agent is None:
+            return '该用户已被删除'
         return agent.phone
 
     def get_receipt_address(self, obj):

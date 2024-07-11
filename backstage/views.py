@@ -294,6 +294,7 @@ class RechargesView(APIView):
             serializer = RechargeSerializer(records, many=True)
             return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
         except Exception:
+            traceback.print_exc()
             return Response(tools.api_response(500, '获取充值记录失败'))
 
 

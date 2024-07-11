@@ -21,7 +21,10 @@ class AgentSerializer(serializers.ModelSerializer):
     def get_parent(self, obj):
         if obj.parent_id < 0:
             return '无'
-        parent = AgentModel.objects.get(pk=obj.parent_id)
+        parent = AgentModel.objects.filter(pk=obj.parent_id).first()
+
+        if parent is None:
+            return '无'
 
         return parent.phone
 
