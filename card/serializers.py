@@ -11,7 +11,10 @@ class CardSerializer(serializers.ModelSerializer):
     customer = SerializerMethodField()
 
     def get_agent(self, obj):
-        agent = AgentModel.objects.get(pk=obj.agent_id)
+        agent = AgentModel.objects.filter(pk=obj.agent_id).first()
+
+        if agent is None:
+            return '此账号已被删除'
 
         return agent.phone
 

@@ -15,19 +15,26 @@ class WithdrawSerializer(serializers.ModelSerializer):
     payment = SerializerMethodField()
 
     def get_user(self, obj):
+        user = None
         if obj.is_agent == 0:
-            user = CustomerModel.objects.get(pk=obj.user_id)
+            user = CustomerModel.objects.filter(pk=obj.user_id).first()
         else:
-            user = AgentModel.objects.get(pk=obj.user_id)
+            user = AgentModel.objects.filter(pk=obj.user_id).first()
+
+        if user is None:
+            return '该账户已被删除'
 
         return user.phone
 
     def get_payment(self, obj):
         user = None
         if obj.is_agent == 0:
-            user = CustomerModel.objects.get(pk=obj.user_id)
+            user = CustomerModel.objects.filter(pk=obj.user_id).first()
         else:
-            user = AgentModel.objects.get(pk=obj.user_id)
+            user = AgentModel.objects.filter(pk=obj.user_id).first()
+
+        if user is None:
+            return '此账户已被删除'
 
         if obj.payment_type == 1:
             return user.alipay_qrcode
