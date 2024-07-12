@@ -92,7 +92,7 @@ class RecycleView(APIView):
             me = request.user
             status = int(request.GET.get('status'))
 
-            records = CardModel.objects.filter(customer_id=me.pk)
+            records = CardModel.objects.filter(customer_id=me.pk).order_by('-id')
 
             if status == 3:
                 records = records.filter(status=status)
@@ -266,7 +266,7 @@ class WithdrawView(APIView):
     def get(self, request):
         try:
             me = request.user
-            records = WithdrawModel.objects.filter(is_agent=0, user_id=me.pk)
+            records = WithdrawModel.objects.filter(is_agent=0, user_id=me.pk).order_by('-id')
             status = int(request.GET.get('status'))
 
             if status > -1:

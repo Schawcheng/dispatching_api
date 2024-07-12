@@ -289,7 +289,7 @@ class RechargesView(APIView):
 
     def get(self, request):
         try:
-            records = RechargeModel.objects.all()
+            records = RechargeModel.objects.all().order_by('-id')
             total = records.count()
             serializer = RechargeSerializer(records, many=True)
             return Response(tools.api_response(200, 'ok', data=serializer.data, total=total))
@@ -342,7 +342,7 @@ class CardsView(APIView):
 
     def get(self, request):
         try:
-            records = CardModel.objects.all()
+            records = CardModel.objects.all().order_by('-id')
             total = records.count()
 
             serializer = CardSerializer(records, many=True)
@@ -468,7 +468,7 @@ class WithdrawView(APIView):
 
     def get(self, request):
         try:
-            records = WithdrawModel.objects.all()
+            records = WithdrawModel.objects.all().order_by('-id')
             total = records.count()
             serializer = WithdrawSerializer(records, many=True)
 
