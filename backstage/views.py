@@ -390,6 +390,20 @@ class CardsView(APIView):
             return Response(tools.api_response(500, '发卡失败'))
 
 
+class CardDetailView(APIView):
+    authentication_classes = [JwtTokenAuthentication]
+
+    def delete(self, request, card_id):
+        try:
+            record = CardModel.objects.get(pk=card_id)
+            record.delete()
+            return Response(tools.api_response(200, '删除成功'))
+        except CardModel.DoesNotExist:
+            return Response(tools.api_response(404, '此卡不存在'))
+        except Exception as e:
+            return Response(tools.api_response(500, '删除失败'))
+
+
 class AgentStatisticsView(APIView):
     authentication_classes = [JwtTokenAuthentication]
 

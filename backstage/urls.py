@@ -31,6 +31,7 @@ urlpatterns = [
     path('recharges/', views.RechargesView.as_view()),
     path('recharges/<int:recharge_id>/', views.RechargeDetailView.as_view()),
     path('cards/', views.CardsView.as_view()),
+    path('cards/<int:card_id>/', views.CardDetailView.as_view()),
     path('system-configs/', views.SystemConfigsView.as_view()),
     path('system-configs/<int:config_id>/', views.SystemConfigDetailView.as_view()),
     path('recharges-statistics/', views.RechargesStatisticsView.as_view()),
