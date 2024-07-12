@@ -151,13 +151,24 @@ def generate_unique_invitation_code(user_id, length=8):
     return code
 
 
-def generate_card_password(length=8):
-    chars = string.ascii_letters + string.digits
-    random_string = ''.join(random.choice(chars) for _ in range(length))
-    return random_string
+def generate_card_password():
+    unique_id = uuid.uuid4().hex[:16].upper()
+
+    return unique_id
 
 
+def generate_unique_card_number(prefix=''):
+    while True:
+        # Generate a UUID and convert it to a base-10 string.
+        uuid_string = str(uuid.uuid4()).replace('-', '')
+
+        # Extract the first 17 digits of the base-10 UUID string.
+        decimal_string = uuid_string[:17]
+
+        # Check if the generated string is valid (only contains digits).
+        if all(decimal_string[i].isdigit() for i in range(len(decimal_string))):
+            return f'{prefix}{decimal_string}'
 
 
-if __name__ == '__main__':
-    print(generate_card_password())
+if __name__ == "__main__":
+    print(generate_unique_card_number())

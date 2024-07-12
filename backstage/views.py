@@ -373,7 +373,7 @@ class CardsView(APIView):
             record_agent.save(update_fields=['points'])
 
             for i in range(quantity):
-                key = tools.generate_unique_key()
+                key = tools.generate_unique_card_number('JDV')
                 card_obj = CardModel(
                     key=key,
                     points=points,
