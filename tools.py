@@ -151,17 +151,17 @@ def generate_unique_invitation_code(user_id, length=8):
     return code
 
 
-def generate_card_password():
-    # 生成随机 128 位整数作为额外的熵
-    random_bytes = random.getrandbits(128).to_bytes(16, 'big')
+def generate_card_password(length=16):
+    """Generates a unique 16-character string of uppercase letters and digits."""
 
-    # 将随机字节转换为十六进制字符串
-    random_hex = random_bytes.hex()
+    # Define the character pool
+    characters = string.ascii_uppercase + string.digits
 
-    # 使用随机十六进制字符串作为熵生成 UUID
-    uuid_string = str(uuid.uuid4(hex=random_hex))
+    # Generate a random string using the character pool
 
-    return uuid_string
+    random_string = ''.join(random.choice(characters) for _ in range(length))
+
+    return random_string
 
 
 def generate_unique_card_number(prefix=''):
@@ -178,4 +178,5 @@ def generate_unique_card_number(prefix=''):
 
 
 if __name__ == "__main__":
-    print(generate_card_password())
+    for i in range(16):
+        print(generate_card_password())
