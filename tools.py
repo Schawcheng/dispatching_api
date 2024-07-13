@@ -152,9 +152,16 @@ def generate_unique_invitation_code(user_id, length=8):
 
 
 def generate_card_password():
-    unique_id = uuid.uuid4().hex[:16].upper()
+    # 生成随机 128 位整数作为额外的熵
+    random_bytes = random.getrandbits(128).to_bytes(16, 'big')
 
-    return unique_id
+    # 将随机字节转换为十六进制字符串
+    random_hex = random_bytes.hex()
+
+    # 使用随机十六进制字符串作为熵生成 UUID
+    uuid_string = str(uuid.uuid4(hex=random_hex))
+
+    return uuid_string
 
 
 def generate_unique_card_number(prefix=''):
@@ -171,4 +178,4 @@ def generate_unique_card_number(prefix=''):
 
 
 if __name__ == "__main__":
-    print(generate_unique_card_number())
+    print(generate_card_password())
