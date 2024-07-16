@@ -412,8 +412,13 @@ class SupportDetailView(APIView):
 
     def get(self, request):
         try:
-            record = SystemConfigModel.objects.get(title='tg_support')
-            return Response(tools.api_response(200, 'ok', data={'support': record.value}))
+            record_tg = SystemConfigModel.objects.get(title='tg_support')
+            record_wechat = SystemConfigModel.objects.get(title="wechat_support")
+            ret = {
+                "tg_support": record_tg.value,
+                "wechat_support": record_wechat.value
+            }
+            return Response(tools.api_response(200, 'ok', data=ret))
         except SystemConfigModel.DoesNotExist:
             return Response(tools.api_response(404, '配置不存在'))
         except Exception as e:
