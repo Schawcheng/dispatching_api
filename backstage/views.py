@@ -49,8 +49,16 @@ class AgentsView(APIView):
     authentication_classes = [JwtTokenAuthentication]
 
     def get(self, request):
+        current = request.GET.get('current')
+        page_size = request.GET.get('page_size')
+
         records = AgentModel.objects.filter()
         total = records.count()
+
+        start_index, end_index = tools.get_pagination(current, page_size)
+
+        records = records[start_index:end_index]
+
         serializer = AgentSerializer(records, many=True)
 
         return Response(tools.api_response(200, 'OK', data=serializer.data, total=total))
