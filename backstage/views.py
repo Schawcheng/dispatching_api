@@ -542,8 +542,16 @@ class WithdrawDetailView(APIView):
             if record.is_agent == 0:
                 record_user = CustomerModel.objects.get(pk=record.user_id)
 
-            record_user.total_income += record.points
-            record_user.save(update_fields=['total_income'])
+            if record_user is None:
+                return Response(tools.api_response(404, '该订单绑定的账户不存在，可能已经被删除'))
+
+            if status == 1:
+                record_user.total_income += record.points
+                record_user.save(update_fields=['total_income'])
+
+            if status == 2:
+                record_user.points += record.points
+                record_user.save(update_fields=['points'])
 
             record.status = status
             record.save(update_fields=['status'])
