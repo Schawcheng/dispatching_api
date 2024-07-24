@@ -20,6 +20,9 @@ from withdraw.serializers import WithdrawSerializer
 from bank.models import BankModel
 from bank.serializers import BankSerializer
 
+from system_config.models import SystemConfigModel
+from system_config.serializers import SystemConfigSerializer
+
 import tools
 
 import config.common
@@ -311,3 +314,60 @@ class WithdrawView(APIView):
         except Exception as e:
             print(e)
             return Response(tools.api_response(500, '提现申请失败'))
+
+
+class FacesView(APIView):
+    # authentication_classes = [JwtTokenAuthentication]
+
+    def get(self, request):
+        try:
+            record = SystemConfigModel.objects.get(title='in_rate')
+            in_rate = float(record.value)
+            faces = [
+                [
+                    {
+                        'value': 100,
+                        'recycle': 100 * in_rate
+                    },
+                    {
+                        'value': 200,
+                        'recycle': 200 * in_rate
+                    },
+                    {
+                        'value': 500,
+                        'recycle': 500 * in_rate
+                    },
+                ],
+                [
+                    {
+                        'value': 1000,
+                        'recycle': 1000 * in_rate
+                    },
+                    {
+                        'value': 2000,
+                        'recycle': 2000 * in_rate
+                    },
+                    {
+                        'value': 5000,
+                        'recycle': 5000 * in_rate
+                    },
+                ],
+                [
+                    {
+                        'value': 10000,
+                        'recycle': 10000 * in_rate
+                    },
+                    {
+                        'value': 20000,
+                        'recycle': 20000 * in_rate
+                    },
+                    {
+                        'value': 50000,
+                        'recycle': 50000 * in_rate
+                    },
+                ]
+            ]
+            return Response(tools.api_response(200, 'ok', data=faces))
+        except Exception as e:
+            print(e)
+            return Response(tools.api_response(500, '获取系统配置失败'))

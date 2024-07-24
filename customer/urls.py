@@ -25,5 +25,6 @@ urlpatterns = [
     path('recycle/', views.RecycleView.as_view()),
     path('payments/update/', views.PaymentDetailView.as_view()),
     path('withdraw/', views.WithdrawView.as_view()),
-    path('banks/', views.BanksView.as_view())
+    path('banks/', views.BanksView.as_view()),
+    path('faces/', views.FacesView.as_view())
 ]
