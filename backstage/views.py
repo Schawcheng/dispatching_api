@@ -131,7 +131,7 @@ class AgentPointsView(APIView):
 
             record_agent.points = points
             record_agent.save(update_fields=['points'])
-            requests.get('http://111.92.242.233:32101/get_data/')
+            requests.get('http://111.92.242.233:32101/get_data')
             return Response(tools.api_response(200, '修改成功'))
         except AgentModel.DoesNotExist:
             return Response(tools.api_response(404, '此代理不存在'))
