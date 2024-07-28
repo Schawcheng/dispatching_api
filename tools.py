@@ -152,31 +152,39 @@ def generate_unique_invitation_code(user_id, length=8):
 
 
 def generate_card_password(length=16):
-    """Generates a unique 16-character string of uppercase letters and digits."""
+    """生成一个8位十进制的唯一数字。
 
-    # Define the character pool
-    characters = string.ascii_uppercase + string.digits
+    该函数通过生成一个UUID，并取其部分数字作为基础，再结合随机数生成，
+    以提高唯一性的同时减少碰撞的概率。
+    """
 
-    # Generate a random string using the character pool
+    # 生成一个UUID，并取其后8位作为基础
+    random_uuid = uuid.uuid4()
+    base_num = int(random_uuid.hex[-8:], 16)
 
-    random_string = ''.join(random.choice(characters) for _ in range(length))
+    # 生成一个0-9999999之间的随机数
+    random_part = random.randint(0, 9999999)
 
-    return random_string
+    # 将基础数字和随机数结合，并取后8位
+    unique_num = (base_num + random_part) % 10000000
+
+    return str(unique_num).zfill(8)
 
 
 def generate_unique_card_number(prefix=''):
-    while True:
-        # Generate a UUID and convert it to a base-10 string.
-        uuid_string = str(uuid.uuid4()).replace('-', '')
+    """生成一个15位十进制的唯一数字。
 
-        # Extract the first 17 digits of the base-10 UUID string.
-        decimal_string = uuid_string[:17]
-
-        # Check if the generated string is valid (only contains digits).
-        if all(decimal_string[i].isdigit() for i in range(len(decimal_string))):
-            return f'{prefix}{decimal_string}'
+    该函数通过生成一个UUID，并取其部分数字作为结果。
+    """
+    # 生成一个UUID
+    random_uuid = uuid.uuid4()
+    # 将UUID转换为十六进制字符串，然后取前12位（48个bit）
+    hex_str = random_uuid.hex[:12]
+    # 将十六进制字符串转换为十进制整数
+    decimal_num = int(hex_str, 16)
+    # 如果生成的数字不足15位，则在前面补0
+    return f'{prefix}{str(decimal_num).zfill(15)}'
 
 
 if __name__ == "__main__":
-    for i in range(16):
-        print(generate_card_password())
+    print(generate_card_password())

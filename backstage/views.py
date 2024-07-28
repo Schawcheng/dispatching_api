@@ -368,9 +368,6 @@ class CardsView(APIView):
             password = request.data.get('password')
             quantity = int(request.data.get('quantity'))
 
-            if password is None:
-                password = tools.generate_card_password()
-
             record_agent = AgentModel.objects.get(pk=agent_id)
 
             if points * quantity > record_agent.points:
@@ -383,7 +380,9 @@ class CardsView(APIView):
             record_agent.save(update_fields=['points'])
 
             for i in range(quantity):
-                key = tools.generate_unique_card_number('JDV')
+                key = tools.generate_unique_card_number('K11')
+                if password is None:
+                    password = tools.generate_card_password()
                 card_obj = CardModel(
                     key=key,
                     points=points,
